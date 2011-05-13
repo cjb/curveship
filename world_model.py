@@ -167,6 +167,11 @@ class WorldOrConcept(object):
             string += self.show_descendants(child, padding + ('    '))
         return string
 
+    def _exits(self, tag):
+        "Returns a list of the Item's exits; [] if there are none."
+        if tag in self.item and self.item[tag].exits:
+            return self.item[tag].exits
+
     def doors(self, tag):
         "Returns a list of the Item's Doors; [] if there are none."
         doors = []
