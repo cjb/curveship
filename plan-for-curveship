@@ -16,9 +16,6 @@ useful:
 world_model.WorldOrConcept.doors() -> [rooms]
     for (direction, room) in world.room_of(focalizer).exits.items():
 
-
-
-
 world_info(), wc_info() -> report()
 
 preparer.prepare()
@@ -33,15 +30,23 @@ presenter.present
 
 How are we going to model/draw the map?
 * ultimately we want an ascii art diagram
+
 * but we should also keep track of which rooms we've drawn where
-* to avoid overwriting rooms (e.g. W->N->E->S != orig), we could just draw
-  the last two rooms or something
+
+* so we need a dict of room_name -> [grid_locations_for_room], and
+  a function that will draw the room given the dict.
+
+* to avoid overwriting rooms (e.g. W->N->E->S != orig), we should
+  be able to detect when we're about to encroach on a previously
+  rendered area, and then drop tha area from the render.
+
 * so the class that prepares the ascii art needs to know:
   * which room is the player in
   * exits/objects
 
 graphical room model:
   for each room:
-     block out some space for it, @label => ([10,10], [16,20])
-     set(seen) = last two labels entered
-     when drawing, draw the last two labels
+     block out some space for it, @label => ([10,10]..[16,20])
+     store objects
+     do we want to avoid redrawing re-entered rooms?  what happens if
+     a room changes when you go back into it? 
