@@ -1,0 +1,47 @@
+
+* Populate inventory list
+* Move into the first room
+* When moving into any room:
+** Find out what type of exits and objects the room has
+** Draw a room with those exits and objects
+** Show and speak the flavortext for the new room
+** Put an invisible "exit" object on the exit
+** If the exit object is stepped on, leave the room in the current movement direction
+
+* When the player is on top of an object, highlight previously-greyed-out commands that are possible (pick up, use with)
+* use with can be standalone or in combination with an inventory object
+
+useful:
+
+world_model.WorldOrConcept.doors() -> [rooms]
+    for (direction, room) in world.room_of(focalizer).exits.items():
+
+
+
+
+world_info(), wc_info() -> report()
+
+preparer.prepare()
+handle_input() -> 
+	       simulator()
+			actions_to_do.extend()
+			commanded.do_command()
+			action.do() ->
+				    self.change(world)
+       <- world, discourse
+presenter.present
+
+How are we going to model/draw the map?
+* ultimately we want an ascii art diagram
+* but we should also keep track of which rooms we've drawn where
+* to avoid overwriting rooms (e.g. W->N->E->S != orig), we could just draw
+  the last two rooms or something
+* so the class that prepares the ascii art needs to know:
+  * which room is the player in
+  * exits/objects
+
+graphical room model:
+  for each room:
+     block out some space for it, @label => ([10,10], [16,20])
+     set(seen) = last two labels entered
+     when drawing, draw the last two labels
