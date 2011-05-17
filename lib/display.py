@@ -38,6 +38,7 @@ class Display:
 
     def draw_map(self, level, rect=None):
         """Draw the background based on the provided map."""
+        print "in draw_map"
         cache = {}
         background = pygame.Surface((level.w*24, level.h*16))
         background.fill((0, 0, 0))
@@ -106,7 +107,6 @@ class Display:
         Clean up after sprites, taking scrolling into account and
         handling sprites that are out of map.
         """
-
         source = rect.move(-self.scrollpos[0], -self.scrollpos[1])
         if not self.background.get_rect().contains(source):
             screen.fill((0, 0, 0), rect)

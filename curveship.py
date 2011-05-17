@@ -182,9 +182,11 @@ def simulator(user_input, world, commanded, actions_to_do=None):
     if commanded is not None and user_input is not None:
         commanded = world.item[commanded]
         c_action = commanded.do_command(user_input.normal, command_map, world)
-        if c_action is not None:
+        print c_action
+	if c_action is not None:
             c_action.cause = '"' + ' '.join(user_input.normal) + '"'
             actions_to_do.append(c_action)
+            print actions_to_do
             if user_input is not None:
                 user_input.caused = c_action.id
     current_time = start_time

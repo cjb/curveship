@@ -18,6 +18,7 @@ class Mob(monster.Monster):
             sprite.Monster.__init__(self, monster, display)
             self.depth += 1 # Display in front of all other creatures
             self.old_facing = self.facing
+            self.display = display
 
         def animate(self, delay=1, frames=None):
             """Player has more frames and facing."""
@@ -106,6 +107,7 @@ class Mob(monster.Monster):
         self.hp -= damage
 
     def walk(self, facing):
+        compass = { 1: "north", 2: "east", 3: "south", 4: "west" }
         monster.Monster.walk(self, facing)
         item = self.level.items.get(self.pos, None)
         if item and item.can_pick:
@@ -113,6 +115,10 @@ class Mob(monster.Monster):
             mesg.Mesg(self.display, item.sprite, item.name, delay=12)
 	if item and item.is_exit:
             print "should open new exit"
+            self.level.use_exit(self.pos, compass[facing])
+            self.sprite.display.draw_map(self.level)
+            self.sprite.display.refresh()
+            self.level.place_blocks()
 
     def act(self, level):
         pass

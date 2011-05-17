@@ -66,10 +66,19 @@ class Game(object):
                 mesg.Mesg(self.display, player.sprite, "blocked")
             self.display.show_frame()
 
-    def play_level(self, world):
-        """Play a single level."""
+    def static_level(self):
+        """Play a Static level."""
+        self.level = StaticLevel()
+        self.play_level()
 
-        self.level = StaticLevel(world)
+    def curve_level(self, Main, preparer, world, discourse):
+        """Play a Curveship level."""
+
+        self.level = CurveshipLevel(Main, preparer, world, discourse)
+        self.play_level()
+
+    def play_level(self):
+        """Play a single level."""
 
         self.display.draw_map(self.level)
         self.display.add_sprite(*(self.level.monsters.values()))

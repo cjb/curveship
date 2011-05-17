@@ -2,6 +2,8 @@ import pygame
 from pygame.locals import *
 import os
 import re
+import sys
+import random
 
 import item
 import monster
@@ -29,16 +31,19 @@ class Level(object):
             return True
 
 class CurveshipLevel(Level):
-    def __init__(self, world, discourse):
+    def __init__(self, Main, preparer, world, discourse):
+        self.main = Main
         self.world = world
         self.discourse = discourse
-        self.w = 20
-        self.h = 20
+        self.preparer = preparer
+        self.w = 30
+        self.h = 30
         self.rooms = {}
+        self.room_by_pos = {}
 
         self.map = [[":" for i in range(self.w)] for j in range(self.h)]
+        self.room_by_pos = [[None for i in range(self.w)] for j in range(self.h)]
         self.debug_map()
-
         self.create_map()
 
         self.blocking = []
@@ -49,23 +54,55 @@ class CurveshipLevel(Level):
             "X": ("terrain.wall",),
             ":": ("terrain.floor",),
             "@": ("terrain.floor", "monster.player"),
-            ">": ("terrain.floor", "item.down"),
+            ">": ("terrain.floor", "item.exit"),
         }
         self.place_monsters(self.map)
 
-    def create_room(self, label, tl, br):
-        print "creating room from %s to %s" % (tl, br)
+    def create_room(self, label, tl=[0,0], br=[0,0]):
+        print self.rooms
+        print tl, br
+        if label in self.rooms:
+            # we already created this room
+            return
+
+        # If we're called without coords, randomize.
+        if not tl[0] and not br[0]:
+            room_size = random.randint(2,3)
+            if self.direction is "north":
+                center_point = (self.pos[0], self.pos[1]-room_size)
+            elif self.direction is "south":
+                center_point = (self.pos[0], self.pos[1]+room_size)
+            elif self.direction is "east":
+                center_point = (self.pos[0]+room_size, self.pos[1])
+            elif self.direction is "west":
+                center_point = (self.pos[0]-room_size, self.pos[1])
+
+            print "new center_point is %s %s" % (center_point[0], center_point[1])
+            tl[0] = center_point[0] - room_size
+            tl[1] = center_point[1] - room_size
+            br[0] = center_point[0] + room_size
+            br[1] = center_point[1] + room_size
+
+        print "creating room %s from %s to %s" % (label, tl, br)
         # self.rooms[label] = [(x, y) for x in xrange(tl, br)
         #                             for y in xrange(tl, br)]
         self.rooms[label] = []
         for x in xrange(tl[0], br[0]+1):
             for y in xrange(tl[1], br[1]+1):
-                print "room coord %s %s" % (x, y)
+                # print "room coord %s %s" % (x, y)
                 self.rooms[label].append([x, y])
-                if y is tl[0] or y is br[0]:
-                    self.map[y][x] = "X"
-                if x is br[0] or x is tl[1]:
-                    self.map[y][x] = "X"
+                self.room_by_pos[x][y] = label
+
+                if x is tl[0] or x is br[0]:
+                    # print "edge piece"
+                    if not (x is self.pos[0] and y is self.pos[1]):
+                        self.map[y][x] = "X"
+                if y is br[1] or y is tl[1]:
+                    # print "edge piece"
+                    if not (x is self.pos[0] and y is self.pos[1]):
+                        self.map[y][x] = "X"
+
+        self.debug_map()
 
     def create_exit(self, oldlabel, newlabel, direction):
         # Get the midpoint tile of oldlabel's room
@@ -84,11 +121,25 @@ class CurveshipLevel(Level):
             newloc = (room[-1][0], mid_y)
         if direction is "west":
             newloc = (room[0][0], mid_y)
+
         x, y = newloc
         # make it an exit tile
-        print "exit tile"
-        self.rooms
         self.map[y][x] = ">"
+
+    def use_exit(self, pos, direction):
+        self.pos = pos
+        self.direction = direction
+
+        print "pos is %s %s" % (pos[0], pos[1])
+        item = self.items.get(pos, None)
+        print "Current room is %s" % self.room_by_pos[pos[0]][pos[1]]
+        print item
+        user_input = self.preparer.tokenize("leave " + direction, self.discourse.separator)
+
+        self.main.handle_input(user_input, self.world, self.discourse, sys.stdin, sys.stdout)
+        newroom = str(self.world.room_of(self.discourse.spin['focalizer']))
+
+        self.create_room(newroom, [0,0], [0,0])
 
     def debug_map(self):
         for line in self.map:
@@ -98,24 +149,22 @@ class CurveshipLevel(Level):
         current_room = str(self.world.room_of(self.discourse.spin['focalizer']))
 
         # Put first room in the middle.
-        tl = [((self.w/2)-2), (self.h/2)-2]
-        br = [((self.w/2)+2), (self.h/2)+2]
+        tl = [((self.w/2)-4), (self.h/2)-4]
+        br = [((self.w/2)+4), (self.h/2)+4]
 
         print "first room"
-        self.map[self.h/2][self.w/2] = "@"
+        self.pos = (self.w/2, self.h/2)
         self.create_room(current_room, tl, br)
+        self.map[self.h/2][self.w/2] = "@"
+
 
         exits = self.world._exits(current_room)
         for an_exit in exits:
             self.create_exit(current_room, exits[an_exit], an_exit)
-
         self.debug_map()
 
-    def place_monsters(self, m):
-        """Place monsters on the map."""
-
-        self.monsters = {}
-        self.items = {}
+    def place_blocks(self):
+        self.blocking = []
         for line in self.map:
             block_line = []
             for char in line:
@@ -124,6 +173,13 @@ class CurveshipLevel(Level):
             if self.w < len(block_line):
                 self.w = len(block_line)
             self.blocking.append(block_line)
+
+    def place_monsters(self, m):
+        """Place monsters on the map."""
+        self.monsters = {}
+        self.items = {}
+
+        self.place_blocks()
 
         for y, line in enumerate(m):
             for x, tile in enumerate(line):
@@ -154,7 +210,7 @@ class CurveshipLevel(Level):
         return self.map_key.get(m, ())
 
 class StaticLevel(Level):
-    def __init__(self, world, discourse):
+    def __init__(self):
         self.static_map()
         self.place_monsters(self.map)
 

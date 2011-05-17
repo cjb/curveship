@@ -31,5 +31,5 @@ if base_path:
 from game import Game
 
 if __name__ == "__main__":
-    Game().play_level()
+    Game().play_level(None)
 
