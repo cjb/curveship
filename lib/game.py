@@ -6,6 +6,7 @@ from pygame.locals import *
 
 from display import Display
 from level import StaticLevel
+from level import CurveshipLevel
 from effect import mesg
 import monster
 import util
@@ -65,10 +66,11 @@ class Game(object):
                 mesg.Mesg(self.display, player.sprite, "blocked")
             self.display.show_frame()
 
-    def play_level(self):
+    def play_level(self, world):
         """Play a single level."""
 
-        self.level = StaticLevel()
+        self.level = StaticLevel(world)
+
         self.display.draw_map(self.level)
         self.display.add_sprite(*(self.level.monsters.values()))
         self.display.add_sprite(*(self.level.items.values()))

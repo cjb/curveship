@@ -7,6 +7,7 @@ import item
 class Item(item.Item):
     name = "down"
     can_pick = False
+    is_exit = True
 
     class Sprite(sprite.Item):
         def place(self, pos):

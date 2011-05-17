@@ -10,7 +10,7 @@ from pygame.locals import *
 # Initialize global libs. Must be done before importing other modules.
 pygame.init()
 pygame.font.init()
-pygame.display.set_mode((384, 384))
+pygame.display.set_mode((800, 384))
 pygame.display.set_caption("Junk Jungle")
 pygame.display.set_icon(pygame.image.load(os.path.join("lib", "effect", "icon.png")))
 

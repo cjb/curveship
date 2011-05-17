@@ -90,6 +90,7 @@ class Mob(monster.Monster):
     def __init__(self, pos, level):
         monster.Monster.__init__(self, pos, level)
         self.inventory = []
+        self.level = level
 
     def attack(self, facing, monster):
         self.sprite.facing = facing
@@ -110,6 +111,8 @@ class Mob(monster.Monster):
         if item and item.can_pick:
             self.inventory.append(item.pick())
             mesg.Mesg(self.display, item.sprite, item.name, delay=12)
+	if item and item.is_exit:
+            print "should open new exit"
 
     def act(self, level):
         pass
