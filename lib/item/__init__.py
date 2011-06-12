@@ -33,11 +33,13 @@ class Item(object):
         except KeyError:
             pass
         if pos in self.level.items:
-            raise DropError(pos, self)
+            # raise DropError(pos, self)
+            pass
         self.pos = pos
         self.level.items[pos] = self
         if self.sprite and not self.sprite.on_floor:
             self.sprite.place(pos)
+
 
     def drop(self, pos):
         """Drop the item on specified map square, with animation"""

@@ -31,11 +31,12 @@ class Level(object):
             return True
 
 class CurveshipLevel(Level):
-    def __init__(self, Main, preparer, world, discourse):
+    def __init__(self, Main, preparer, world, discourse, display):
         self.main = Main
         self.world = world
         self.discourse = discourse
         self.preparer = preparer
+        self.display = display
         self.w = 30
         self.h = 30
         self.rooms = {}
@@ -59,7 +60,6 @@ class CurveshipLevel(Level):
         self.place_monsters(self.map)
 
     def create_room(self, label, tl=[0,0], br=[0,0]):
-        print self.rooms
         print tl, br
         if label in self.rooms:
             # we already created this room
@@ -102,13 +102,13 @@ class CurveshipLevel(Level):
                     if not (x is self.pos[0] and y is self.pos[1]):
                         self.map[y][x] = "X"
 
+        return tl, br
         self.debug_map()
 
     def create_exit(self, oldlabel, newlabel, direction):
         # Get the midpoint tile of oldlabel's room
         print oldlabel
         room = self.rooms[oldlabel]
-        print room
         mid = room[int(len(room) / 2)]
         (mid_x, mid_y) = mid
 
@@ -131,15 +131,25 @@ class CurveshipLevel(Level):
         self.direction = direction
 
         print "pos is %s %s" % (pos[0], pos[1])
-        item = self.items.get(pos, None)
         print "Current room is %s" % self.room_by_pos[pos[0]][pos[1]]
-        print item
         user_input = self.preparer.tokenize("leave " + direction, self.discourse.separator)
 
         self.main.handle_input(user_input, self.world, self.discourse, sys.stdin, sys.stdout)
-        newroom = str(self.world.room_of(self.discourse.spin['focalizer']))
+        newroom = self.world.room_of(self.discourse.spin['focalizer'])
 
-        self.create_room(newroom, [0,0], [0,0])
+        self.create_room(str(newroom), [0,0], [0,0])
+        for obj in newroom.children:
+            if obj[0] == "part_of":
+                room = self.rooms[str(newroom)]
+                mid = room[int(len(room) / 2)]
+                (mid_x, mid_y) = mid
+
+                # Remove leading "@"
+                i = item.create(self, obj[1][1:])
+                i.place((mid_x, mid_y))
+                self.display.draw_map(self)
+                self.display.add_sprite(*(self.monsters.values()))
+                self.display.add_sprite(*(self.items.values()))
 
     def debug_map(self):
         for line in self.map:
@@ -161,7 +171,7 @@ class CurveshipLevel(Level):
         exits = self.world._exits(current_room)
         for an_exit in exits:
             self.create_exit(current_room, exits[an_exit], an_exit)
-        self.debug_map()
+        # self.debug_map()
 
     def place_blocks(self):
         self.blocking = []

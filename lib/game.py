@@ -11,6 +11,7 @@ from effect import mesg
 import monster
 import util
 import item
+import sys
 
 class Game(object):
     def __init__(self):
@@ -74,7 +75,7 @@ class Game(object):
     def curve_level(self, Main, preparer, world, discourse):
         """Play a Curveship level."""
 
-        self.level = CurveshipLevel(Main, preparer, world, discourse)
+        self.level = CurveshipLevel(Main, preparer, world, discourse, self.display)
         self.play_level()
 
     def play_level(self):
@@ -93,5 +94,6 @@ class Game(object):
             for step in range(8): # Animate single turn
                 self.display.scroll_after(self.level.player.sprite.rect)
                 self.display.show_frame()
+        sys.exit()
 
 

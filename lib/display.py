@@ -10,12 +10,15 @@ from pygame.locals import *
 # Initialize global libs. Must be done before importing other modules.
 pygame.init()
 pygame.font.init()
-pygame.display.set_mode((800, 384))
+pygame.display.set_mode((800, 600))
+# pygame.display.set_mode((2560, 1600), pygame.FULLSCREEN)
+
 pygame.display.set_caption("Junk Jungle")
 pygame.display.set_icon(pygame.image.load(os.path.join("lib", "effect", "icon.png")))
 
 import sprite
 import effect.gauge
+import effect.inventory
 import terrain
 import effect.status
 
@@ -34,7 +37,9 @@ class Display:
         self.hud = pygame.sprite.RenderUpdates()
         self.scrollpos = [0, 0]
         self.key_pressed = None
+        # self.hud.add(effect.inventory.Inventory(self, , "foo"))
         self.hud.add(effect.gauge.Gauge(self))
+
 
     def draw_map(self, level, rect=None):
         """Draw the background based on the provided map."""
@@ -127,20 +132,20 @@ class Display:
     def update(self):
         """Redraw and update all the animated parts"""
 
-#        self.hud.clear(self.screen, self.clear_func)
+        self.hud.clear(self.screen, self.clear_func)
         self.effects.clear(self.screen, self.clear_func)
         self.sprites.clear(self.screen, self.clear_func)
         self.shadows.clear(self.screen, self.clear_func)
         self.sprites.update()
         self.shadows.update()
         self.effects.update()
-#        self.hud.update()
+        self.hud.update()
         dirty = []
         dirty += self.shadows.draw(self.screen)
         dirty += self.sprites.draw(self.screen)
         self.overlay.draw(self.screen)
         dirty += self.effects.draw(self.screen)
-#        dirty += self.hud.draw(self.screen)
+        dirty += self.hud.draw(self.screen)
         pygame.display.update(dirty)
 
     def show_frame(self):

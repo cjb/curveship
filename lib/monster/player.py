@@ -110,10 +110,12 @@ class Mob(monster.Monster):
         compass = { 1: "north", 2: "east", 3: "south", 4: "west" }
         monster.Monster.walk(self, facing)
         item = self.level.items.get(self.pos, None)
+        if item and not hasattr(item, "is_exit"):
+            mesg.Mesg(self.display, item.sprite, item.name, delay=6)
         if item and item.can_pick:
             self.inventory.append(item.pick())
             mesg.Mesg(self.display, item.sprite, item.name, delay=12)
-	if item and item.is_exit:
+	if item and hasattr(item, "is_exit") and item.is_exit:
             print "should open new exit"
             self.level.use_exit(self.pos, compass[facing])
             self.sprite.display.draw_map(self.level)
