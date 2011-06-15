@@ -54,56 +54,80 @@ class CurveshipLevel(Level):
         self.map_key = {
             "X": ("terrain.wall",),
             ":": ("terrain.floor",),
+            ";": ("terrain.darkfloor",),
             "@": ("terrain.floor", "monster.player"),
             ">": ("terrain.floor", "item.exit"),
         }
         self.place_monsters(self.map)
 
-    def create_room(self, label, tl=[0,0], br=[0,0]):
+    def create_room(self, label, tl=[0,0], br=[0,0], can_see=True):
         print tl, br
-        if label in self.rooms:
-            # we already created this room
-            return
+        if label not in self.rooms:
+            print "we haven't created this room yet"
+            # If we're called without coords, randomize.
+            if not tl[0] and not br[0]:
+                room_size = random.randint(2,3)
+                if self.direction is "north":
+                    center_point = (self.pos[0], self.pos[1]-room_size)
+                elif self.direction is "south":
+                    center_point = (self.pos[0], self.pos[1]+room_size)
+                elif self.direction is "east":
+                    center_point = (self.pos[0]+room_size, self.pos[1])
+                elif self.direction is "west":
+                    center_point = (self.pos[0]-room_size, self.pos[1])
 
-        # If we're called without coords, randomize.
-        if not tl[0] and not br[0]:
-            room_size = random.randint(2,3)
-            if self.direction is "north":
-                center_point = (self.pos[0], self.pos[1]-room_size)
-            elif self.direction is "south":
-                center_point = (self.pos[0], self.pos[1]+room_size)
-            elif self.direction is "east":
-                center_point = (self.pos[0]+room_size, self.pos[1])
-            elif self.direction is "west":
-                center_point = (self.pos[0]-room_size, self.pos[1])
+                print "new center_point is %s %s" % (center_point[0], center_point[1])
+                tl[0] = center_point[0] - room_size
+                tl[1] = center_point[1] - room_size
+                br[0] = center_point[0] + room_size
+                br[1] = center_point[1] + room_size
 
-            print "new center_point is %s %s" % (center_point[0], center_point[1])
-            tl[0] = center_point[0] - room_size
-            tl[1] = center_point[1] - room_size
-            br[0] = center_point[0] + room_size
-            br[1] = center_point[1] + room_size
+            print "creating room %s from %s to %s" % (label, tl, br)
+            # self.rooms[label] = [(x, y) for x in xrange(tl, br)
+            #                             for y in xrange(tl, br)]
+            self.rooms[label] = []
+            for x in xrange(tl[0], br[0]+1):
+                for y in xrange(tl[1], br[1]+1):
+                    # print "room coord %s %s" % (x, y)
+                    self.rooms[label].append([x, y])
+                    self.room_by_pos[x][y] = label
 
-        print "creating room %s from %s to %s" % (label, tl, br)
-        # self.rooms[label] = [(x, y) for x in xrange(tl, br)
-        #                             for y in xrange(tl, br)]
-        self.rooms[label] = []
-        for x in xrange(tl[0], br[0]+1):
-            for y in xrange(tl[1], br[1]+1):
-                # print "room coord %s %s" % (x, y)
-                self.rooms[label].append([x, y])
-                self.room_by_pos[x][y] = label
+                    if x is tl[0] or x is br[0]:
+                        # print "edge piece"
+                        if not (x is self.pos[0] and y is self.pos[1]):
+                            self.map[y][x] = "X"
+                            continue
+                    else:
+                        if can_see is True:
+                            self.map[y][x] = ":"
+                        else:
+                            self.map[y][x] = ";"
 
-                if x is tl[0] or x is br[0]:
-                    # print "edge piece"
-                    if not (x is self.pos[0] and y is self.pos[1]):
-                        self.map[y][x] = "X"
-                if y is br[1] or y is tl[1]:
-                    # print "edge piece"
-                    if not (x is self.pos[0] and y is self.pos[1]):
-                        self.map[y][x] = "X"
+                    if y is br[1] or y is tl[1]:
+                        # print "edge piece"
+                        if not (x is self.pos[0] and y is self.pos[1]):
+                            self.map[y][x] = "X"
+                            continue
+                    else:
+                        if can_see is True:
+                            self.map[y][x] = ":"
+                        else:
+                            self.map[y][x] = ";"
 
-        return tl, br
+        else:
+            # This room already exists.
+            if can_see is True:
+                room = self.rooms[label]
+                mid = room[int(len(room) / 2)]
+                (mid_x, mid_y) = mid
+                if self.map[mid_y][mid_x] is ";":
+                    print "This room was dark before; making it light"
+                    for (x, y) in room:
+                        if self.map[y][x] is ";":
+                            self.map[y][x] = ":"
+
         self.debug_map()
+        return tl, br
 
     def create_exit(self, oldlabel, newlabel, direction):
         # Get the midpoint tile of oldlabel's room
@@ -133,23 +157,32 @@ class CurveshipLevel(Level):
         print "pos is %s %s" % (pos[0], pos[1])
         print "Current room is %s" % self.room_by_pos[pos[0]][pos[1]]
         user_input = self.preparer.tokenize("leave " + direction, self.discourse.separator)
-
         self.main.handle_input(user_input, self.world, self.discourse, sys.stdin, sys.stdout)
         newroom = self.world.room_of(self.discourse.spin['focalizer'])
 
-        self.create_room(str(newroom), [0,0], [0,0])
-        for obj in newroom.children:
-            if obj[0] == "part_of":
-                room = self.rooms[str(newroom)]
-                mid = room[int(len(room) / 2)]
-                (mid_x, mid_y) = mid
+        # XXX: Of course this needs to be replaced with a real UI for put.
+        if (str(newroom)) == "@cloakroom":
+            user_input = self.preparer.tokenize("put cloak on hook", self.discourse.separator)
+            self.main.handle_input(user_input, self.world, self.discourse, sys.stdin, sys.stdout)
 
-                # Remove leading "@"
-                i = item.create(self, obj[1][1:])
-                i.place((mid_x, mid_y))
-                self.display.draw_map(self)
-                self.display.add_sprite(*(self.monsters.values()))
-                self.display.add_sprite(*(self.items.values()))
+        if self.world.prevents_sight(self.discourse.spin['focalizer'], str(newroom)):
+            print "Can't see inside this room."
+            self.create_room(str(newroom), [0,0], [0,0], False)
+        else:
+            self.create_room(str(newroom), [0,0], [0,0], True)
+            for obj in newroom.children:
+                if obj[0] == "part_of":
+                    room = self.rooms[str(newroom)]
+                    mid = room[int(len(room) / 2)]
+                    (mid_x, mid_y) = mid
+
+                    # Remove leading "@"
+                    i = item.create(self, obj[1][1:])
+                    i.place((mid_x, mid_y))
+
+        self.display.draw_map(self)
+        self.display.add_sprite(*(self.monsters.values()))
+        self.display.add_sprite(*(self.items.values()))
 
     def debug_map(self):
         for line in self.map:
@@ -164,7 +197,7 @@ class CurveshipLevel(Level):
 
         print "first room"
         self.pos = (self.w/2, self.h/2)
-        self.create_room(current_room, tl, br)
+        self.create_room(current_room, tl, br, True)
         self.map[self.h/2][self.w/2] = "@"
 
 
