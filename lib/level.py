@@ -4,7 +4,8 @@ import os
 import re
 import sys
 import random
-from espeak.espeak import synth
+
+import gst
 import item
 import monster
 
@@ -42,10 +43,11 @@ class CurveshipLevel(Level):
         self.rooms = {}
         self.room_by_pos = {}
         self.initial_text = initial_text
+        self.pipeline = None
 
         self.map = [[":" for i in range(self.w)] for j in range(self.h)]
         self.room_by_pos = [[None for i in range(self.w)] for j in range(self.h)]
-        self.debug_map()
+        # self.debug_map()
         self.create_map()
 
         self.blocking = []
@@ -127,7 +129,6 @@ class CurveshipLevel(Level):
                         if self.map[y][x] is ";":
                             self.map[y][x] = ":"
 
-        self.debug_map()
         return tl, br
 
     def display_box(self, screen, message):
@@ -137,10 +138,15 @@ class CurveshipLevel(Level):
         pygame.draw.rect(screen, (0,0,0), (30, 100, 720, 300))
         next_y = 100
 
-        synth(str(message))
+        message = [line.replace("\n", "") for line in message]
+        message = [line.replace("=", "") for line in message]
+
+        self.pipeline = gst.parse_launch('espeak name=src ! autoaudiosink')
+        src = self.pipeline.get_by_name('src')
+        src.props.text = message
+        self.pipeline.set_state(gst.STATE_PLAYING)
 
         for line in message:
-            line = line.replace("\n", "")
             if len(message) != 0:
                 screen.blit(fontobject.render(line, 1, (255,255,255)),
                             ((50, next_y)))
@@ -206,6 +212,7 @@ class CurveshipLevel(Level):
         while True:
             event = pygame.event.poll()
             if event.type == KEYDOWN:
+                self.pipeline.set_state(gst.STATE_PAUSED)
                 break
 
     def debug_map(self):
@@ -233,6 +240,7 @@ class CurveshipLevel(Level):
         while True:
             event = pygame.event.poll()
             if event.type == KEYDOWN:
+                self.pipeline.set_state(gst.STATE_PAUSED)
                 break
 
         # self.debug_map()
