@@ -45,6 +45,15 @@ class Display:
         """Draw the background based on the provided map."""
         print "in draw_map"
         cache = {}
+
+        # If we don't do the below and then try to replace a piece of terrain
+        # with another later, self.tiles contains multiple sprites in the same
+        # location and chooses which to render non-deterministically.
+        #
+        # I am writing such a long comment because it took me like four freaking
+        # days to figure this out.
+        self.tiles = pygame.sprite.RenderUpdates()
+
         background = pygame.Surface((level.w*24, level.h*16))
         background.fill((0, 0, 0))
         if rect is None:
