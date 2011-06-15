@@ -31,7 +31,7 @@ class Level(object):
             return True
 
 class CurveshipLevel(Level):
-    def __init__(self, Main, preparer, world, discourse, display):
+    def __init__(self, Main, preparer, world, discourse, display, initial_text):
         self.main = Main
         self.world = world
         self.discourse = discourse
@@ -41,6 +41,7 @@ class CurveshipLevel(Level):
         self.h = 30
         self.rooms = {}
         self.room_by_pos = {}
+        self.initial_text = initial_text
 
         self.map = [[":" for i in range(self.w)] for j in range(self.h)]
         self.room_by_pos = [[None for i in range(self.w)] for j in range(self.h)]
@@ -129,6 +130,22 @@ class CurveshipLevel(Level):
         self.debug_map()
         return tl, br
 
+    def display_box(self, screen, message):
+        "Print a message in a box in the middle of the screen"
+        fontobject = pygame.font.Font(None, 28)
+        pygame.draw.rect(screen, (255,255,255), (48, 98, 654, 304))
+        pygame.draw.rect(screen, (0,0,0), (50, 100, 650, 300))
+        next_y = 100
+
+        for line in message:
+            line = line.replace("\n", "")
+            if len(message) != 0:
+                screen.blit(fontobject.render(line, 1, (255,255,255)),
+                            ((50, next_y)))
+                next_y = next_y + 25
+
+        pygame.display.flip()
+
     def create_exit(self, oldlabel, newlabel, direction):
         # Get the midpoint tile of oldlabel's room
         print oldlabel
@@ -157,7 +174,7 @@ class CurveshipLevel(Level):
         print "pos is %s %s" % (pos[0], pos[1])
         print "Current room is %s" % self.room_by_pos[pos[0]][pos[1]]
         user_input = self.preparer.tokenize("leave " + direction, self.discourse.separator)
-        self.main.handle_input(user_input, self.world, self.discourse, sys.stdin, sys.stdout)
+        (user_input, world, discourse, presentation) = self.main.handle_input(user_input, self.world, self.discourse, sys.stdin, sys.stdout)
         newroom = self.world.room_of(self.discourse.spin['focalizer'])
 
         # XXX: Of course this needs to be replaced with a real UI for put.
@@ -175,7 +192,6 @@ class CurveshipLevel(Level):
                     room = self.rooms[str(newroom)]
                     mid = room[int(len(room) / 2)]
                     (mid_x, mid_y) = mid
-
                     # Remove leading "@"
                     i = item.create(self, obj[1][1:])
                     i.place((mid_x, mid_y))
@@ -183,6 +199,12 @@ class CurveshipLevel(Level):
         self.display.draw_map(self)
         self.display.add_sprite(*(self.monsters.values()))
         self.display.add_sprite(*(self.items.values()))
+
+        self.display_box(pygame.display.get_surface(), presentation)
+        while True:
+            event = pygame.event.poll()
+            if event.type == KEYDOWN:
+                break
 
     def debug_map(self):
         for line in self.map:
@@ -204,6 +226,13 @@ class CurveshipLevel(Level):
         exits = self.world._exits(current_room)
         for an_exit in exits:
             self.create_exit(current_room, exits[an_exit], an_exit)
+
+        self.display_box(pygame.display.get_surface(), self.initial_text)
+        while True:
+            event = pygame.event.poll()
+            if event.type == KEYDOWN:
+                break
+
         # self.debug_map()
 
     def place_blocks(self):

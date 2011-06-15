@@ -139,7 +139,7 @@ class Main():
                 spin = world.item['@cosmos'].use_spin(world, discourse.spin)
             f_concept = world.concept[spin['focalizer']]
             tale, discourse = self.teller(id_list, f_concept, discourse)
-            presenter.present(tale, out_streams)
+            presentation = presenter.present(tale, out_streams)
         elif user_input.directive:
             texts, world, discourse = joker.joke(user_input.normal, world,
                                                  discourse)
@@ -147,7 +147,8 @@ class Main():
                 if text is not None:
                     presenter.present(text, out_streams)
         discourse.input_list.update(user_input)
-        return (user_input, world, discourse)
+
+        return (user_input, world, discourse, presentation)
 
 
     def each_turn(self, world, discourse, in_stream, out_streams):
@@ -261,10 +262,10 @@ class Main():
                                                self.world.act.values())
             focal_concept = self.world.concept[self.discourse.spin['focalizer']]
             reply_text, discourse = self.teller(id_list, focal_concept, self.discourse)
-            presenter.present(reply_text, out_streams)
+            initial_text = presenter.present(reply_text, out_streams)
 
         # Game().static_level()
-        Game().curve_level(self, preparer, self.world, discourse)
+        Game().curve_level(self, preparer, self.world, discourse, initial_text)
 
         try:
             if len(self.world.act) > 0:

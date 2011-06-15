@@ -72,10 +72,10 @@ class Game(object):
         self.level = StaticLevel()
         self.play_level()
 
-    def curve_level(self, Main, preparer, world, discourse):
+    def curve_level(self, Main, preparer, world, discourse, initial_text):
         """Play a Curveship level."""
 
-        self.level = CurveshipLevel(Main, preparer, world, discourse, self.display)
+        self.level = CurveshipLevel(Main, preparer, world, discourse, self.display, initial_text)
         self.play_level()
 
     def play_level(self):

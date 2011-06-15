@@ -68,14 +68,17 @@ def present(string, out_streams, pre='', post='\n\n'):
     if string[-1:] == '\n':
         post = re.sub('^[ \t]+', '', post)
     string = pre + string + post
+    lines = []
     while len(string) > 0:
-        (cols, _) = terminal_size()
+        # (cols, _) = terminal_size()
+        (cols, _) = (70, None)
         (next_line, string) = _break_words(string, cols)
         out_streams.write(next_line)
+        lines.append(next_line)
         if len(string) > 0:
             out_streams.write('\n')
     out_streams.write(string)
-
+    return lines
 
 def center(string, out_streams, pre='', post='\n'):
     'Center the output and print it to the output streams.'
