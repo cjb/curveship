@@ -4,7 +4,7 @@ import os
 import re
 import sys
 import random
-
+from espeak.espeak import synth
 import item
 import monster
 
@@ -37,8 +37,8 @@ class CurveshipLevel(Level):
         self.discourse = discourse
         self.preparer = preparer
         self.display = display
-        self.w = 30
-        self.h = 30
+        self.w = 32
+        self.h = 32
         self.rooms = {}
         self.room_by_pos = {}
         self.initial_text = initial_text
@@ -132,10 +132,12 @@ class CurveshipLevel(Level):
 
     def display_box(self, screen, message):
         "Print a message in a box in the middle of the screen"
-        fontobject = pygame.font.Font(None, 28)
-        pygame.draw.rect(screen, (255,255,255), (48, 98, 654, 304))
-        pygame.draw.rect(screen, (0,0,0), (50, 100, 650, 300))
+        fontobject = pygame.font.SysFont("DejaVu Sans Mono", 16)
+        pygame.draw.rect(screen, (255,255,255), (28, 98, 724, 304))
+        pygame.draw.rect(screen, (0,0,0), (30, 100, 720, 300))
         next_y = 100
+
+        synth(str(message))
 
         for line in message:
             line = line.replace("\n", "")
