@@ -7,16 +7,16 @@ import pygame.font
 
 
 class Inventory(pygame.sprite.Sprite):
-    """Messages float up and disappear."""
+    """List inventory."""
 
-    font = pygame.font.SysFont(None, 18)
-
-    def __init__(self, display, text, color=None, delay=0):
+    def __init__(self, screen, text, color=None, delay=0):
+        font = pygame.font.SysFont(None, 18)
         pygame.sprite.Sprite.__init__(self)
         if color is None:
             color = (255, 255, 255)
-        self.dh = 10
-        self.image = self.font.render(text, False, color).convert()
         self.alpha = 255
+        print text
+        self.image = font.render(text, 1, (255,255,255))
         self.rect = self.image.get_rect()
-        self.image.set_alpha(0)
+        self.rect.bottom = screen.get_rect().bottom - 70
+        screen.blit(self.image, (50, 100))
