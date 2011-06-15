@@ -37,9 +37,7 @@ class Display:
         self.hud = pygame.sprite.RenderUpdates()
         self.scrollpos = [0, 0]
         self.key_pressed = None
-        self.hud.add(effect.inventory.Inventory(self.screen, "Inventory"))
         # self.hud.add(effect.gauge.Gauge(self))
-
 
     def draw_map(self, level, rect=None):
         """Draw the background based on the provided map."""

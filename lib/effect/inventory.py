@@ -9,14 +9,13 @@ import pygame.font
 class Inventory(pygame.sprite.Sprite):
     """List inventory."""
 
-    def __init__(self, screen, text, color=None, delay=0):
+    def __init__(self, screen, text, x, y):
         font = pygame.font.SysFont(None, 18)
         pygame.sprite.Sprite.__init__(self)
-        if color is None:
-            color = (255, 255, 255)
+        color = (255, 255, 255)
         self.alpha = 255
-        print text
-        self.image = font.render(text, 1, (255,255,255))
+        self.image = font.render(text, 1, color)
         self.rect = self.image.get_rect()
-        self.rect.bottom = screen.get_rect().bottom - 70
+        self.rect.left = x
+        self.rect.bottom = y
         screen.blit(self.image, (50, 100))

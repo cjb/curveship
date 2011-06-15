@@ -9,6 +9,8 @@ import gst
 import item
 import monster
 
+from effect.inventory import Inventory
+
 class Level(object):
     def __init__(self):
         self.items = []
@@ -129,6 +131,9 @@ class CurveshipLevel(Level):
                         if self.map[y][x] is ";":
                             self.map[y][x] = ":"
 
+        # XXX: Find a better place for this.
+        self.render_inventory()
+
         return tl, br
 
     def display_box(self, screen, message):
@@ -174,6 +179,17 @@ class CurveshipLevel(Level):
         x, y = newloc
         # make it an exit tile
         self.map[y][x] = ">"
+
+    def render_inventory(self):
+        # Here's one way to populate an inventory.
+        base_y = 530
+        base_x = 10
+        inv = self.world.descendants(self.discourse.spin['focalizer'])
+        print self.discourse.action_templates
+        self.display.hud.add(Inventory(self.display.screen, "Inventory", 10, base_y))
+        for obj in inv:
+            base_x = base_x + 100
+            self.display.hud.add(Inventory(self.display.screen, obj, base_x, base_y))
 
     def use_exit(self, pos, direction):
         self.pos = pos
@@ -231,7 +247,6 @@ class CurveshipLevel(Level):
         self.create_room(current_room, tl, br, True)
         self.map[self.h/2][self.w/2] = "@"
 
-
         exits = self.world._exits(current_room)
         for an_exit in exits:
             self.create_exit(current_room, exits[an_exit], an_exit)
@@ -242,8 +257,6 @@ class CurveshipLevel(Level):
             if event.type == KEYDOWN:
                 self.pipeline.set_state(gst.STATE_PAUSED)
                 break
-
-        # self.debug_map()
 
     def place_blocks(self):
         self.blocking = []
