@@ -61,14 +61,12 @@ class CurveshipLevel(Level):
             ":": ("terrain.floor",),
             ";": ("terrain.darkfloor",),
             "@": ("terrain.floor", "monster.player"),
-            ">": ("terrain.floor", "item.exit"),
+            ">": ("terrain.floor", "item.empty"),
         }
         self.place_monsters(self.map)
 
     def create_room(self, label, tl=[0,0], br=[0,0], can_see=True):
-        print tl, br
         if label not in self.rooms:
-            print "we haven't created this room yet"
             # If we're called without coords, randomize.
             if not tl[0] and not br[0]:
                 room_size = random.randint(2,3)
@@ -81,13 +79,11 @@ class CurveshipLevel(Level):
                 elif self.direction is "west":
                     center_point = (self.pos[0]-room_size, self.pos[1])
 
-                print "new center_point is %s %s" % (center_point[0], center_point[1])
                 tl[0] = center_point[0] - room_size
                 tl[1] = center_point[1] - room_size
                 br[0] = center_point[0] + room_size
                 br[1] = center_point[1] + room_size
 
-            print "creating room %s from %s to %s" % (label, tl, br)
             # self.rooms[label] = [(x, y) for x in xrange(tl, br)
             #                             for y in xrange(tl, br)]
             self.rooms[label] = []
@@ -131,9 +127,6 @@ class CurveshipLevel(Level):
                         if self.map[y][x] is ";":
                             self.map[y][x] = ":"
 
-        # XXX: Find a better place for this.
-        self.render_inventory()
-
         return tl, br
 
     def display_box(self, screen, message):
@@ -161,7 +154,6 @@ class CurveshipLevel(Level):
 
     def create_exit(self, oldlabel, newlabel, direction):
         # Get the midpoint tile of oldlabel's room
-        print oldlabel
         room = self.rooms[oldlabel]
         mid = room[int(len(room) / 2)]
         (mid_x, mid_y) = mid
@@ -181,31 +173,101 @@ class CurveshipLevel(Level):
         self.map[y][x] = ">"
 
     def render_inventory(self):
+        if not hasattr(self.display, "background"):
+            return
+
         # Here's one way to populate an inventory.
         base_y = 530
         base_x = 10
-        inv = self.world.descendants(self.discourse.spin['focalizer'])
-        print self.discourse.action_templates
+        self.inventory = self.world.descendants(self.discourse.spin['focalizer'])
+        self.display.hud = pygame.sprite.RenderUpdates()
+        self.display.hud.clear(self.display.screen, self.display.clear_func)
+        self.display.hud.update()
         self.display.hud.add(Inventory(self.display.screen, "Inventory", 10, base_y))
-        for obj in inv:
+        for obj in self.inventory:
             base_x = base_x + 100
-            self.display.hud.add(Inventory(self.display.screen, obj, base_x, base_y))
+            self.display.hud.add(Inventory(self.display.screen, obj[1:], base_x, base_y))
+
+        self.display.hud.add(Inventory(self.display.screen, "Current object", 210, base_y))
+        # Are we standing on something other than floor?
+        item = self.items.get(self.player.pos, None)
+        if item is not None and item.name is not "empty":
+            self.display.hud.add(Inventory(self.display.screen, item.name, 310, base_y))
+
+        self.display.refresh()
+
+    def perform_action(self, action):
+        user_input = self.preparer.tokenize(action, self.discourse.separator)
+        (_, _, _, presentation) = \
+            self.main.handle_input(user_input, self.world, self.discourse, sys.stdin, sys.stdout)
+
+        display_list = ["> " + action]
+        [display_list.append(line) for line in presentation]
+        self.display_box(self.display.screen, display_list)
+        while True:
+            event = pygame.event.poll()
+            if event.type == KEYDOWN:
+                self.pipeline.set_state(gst.STATE_PAUSED)
+                break
+        self.display.refresh()
+
+    def examine(self):
+        # Are we standing on something other than floor?
+        item = self.items.get(self.player.pos, None)
+        if item is None:
+            action = "look around"
+        else:
+            action = "look at the %s" % item.name
+
+        self.perform_action(action)
+
+    def drop_item(self):
+        if len(self.inventory) == 0:
+            return
+        # Are we standing on something other than floor?
+        obj = self.inventory[0][1:]
+        target = self.items.get(self.player.pos, None)
+        if target is None:
+            action = "drop %s" % obj
+        else:
+            action = "drop %s on %s" % (obj, target.name)
+
+        self.perform_action(action)
+
+        # Do we still have the item?
+        self.render_inventory()
+        if ("@" + obj) not in self.inventory:
+            # Remove leading "@"
+            i = item.create(self, obj)
+            i.drop(self.player.pos)
+
+    def put_item(self):
+        if len(self.inventory) == 0:
+            return
+        # Are we standing on something other than floor?
+        obj = self.inventory[0][1:]
+        target = self.items.get(self.player.pos, None)
+        if target is None:
+            action = "put %s" % obj
+        else:
+            action = "put %s on %s" % (obj, target.name)
+
+        self.perform_action(action)
+
+        # Do we still have the item?
+        self.render_inventory()
+        if ("@" + obj) not in self.inventory:
+            # Remove leading "@"
+            i = item.create(self, obj)
+            i.drop(self.player.pos)
 
     def use_exit(self, pos, direction):
         self.pos = pos
         self.direction = direction
 
-        print "pos is %s %s" % (pos[0], pos[1])
-        print "Current room is %s" % self.room_by_pos[pos[0]][pos[1]]
-        user_input = self.preparer.tokenize("leave " + direction, self.discourse.separator)
-        (user_input, world, discourse, presentation) = self.main.handle_input(user_input, self.world, self.discourse, sys.stdin, sys.stdout)
+        self.perform_action("leave %s" % direction)
+
         newroom = self.world.room_of(self.discourse.spin['focalizer'])
-
-        # XXX: Of course this needs to be replaced with a real UI for put.
-        if (str(newroom)) == "@cloakroom":
-            user_input = self.preparer.tokenize("put cloak on hook", self.discourse.separator)
-            self.main.handle_input(user_input, self.world, self.discourse, sys.stdin, sys.stdout)
-
         if self.world.prevents_sight(self.discourse.spin['focalizer'], str(newroom)):
             print "Can't see inside this room."
             self.create_room(str(newroom), [0,0], [0,0], False)
@@ -224,13 +286,6 @@ class CurveshipLevel(Level):
         self.display.add_sprite(*(self.monsters.values()))
         self.display.add_sprite(*(self.items.values()))
 
-        self.display_box(pygame.display.get_surface(), presentation)
-        while True:
-            event = pygame.event.poll()
-            if event.type == KEYDOWN:
-                self.pipeline.set_state(gst.STATE_PAUSED)
-                break
-
     def debug_map(self):
         for line in self.map:
             print line
@@ -242,7 +297,6 @@ class CurveshipLevel(Level):
         tl = [((self.w/2)-4), (self.h/2)-4]
         br = [((self.w/2)+4), (self.h/2)+4]
 
-        print "first room"
         self.pos = (self.w/2, self.h/2)
         self.create_room(current_room, tl, br, True)
         self.map[self.h/2][self.w/2] = "@"
@@ -252,6 +306,7 @@ class CurveshipLevel(Level):
             self.create_exit(current_room, exits[an_exit], an_exit)
 
         self.display_box(pygame.display.get_surface(), self.initial_text)
+
         while True:
             event = pygame.event.poll()
             if event.type == KEYDOWN:

@@ -125,6 +125,7 @@ class Main():
         commands."""
         c_concept = world.concept[discourse.spin['commanded']]
         user_input = recognizer.recognize(user_input, discourse, c_concept)
+        presentation = ""
         if user_input.unrecognized:
             user_input = clarifier.clarify(user_input, c_concept, discourse,
                                            in_stream, out_streams)
@@ -145,7 +146,7 @@ class Main():
                                                  discourse)
             for text in texts:
                 if text is not None:
-                    presenter.present(text, out_streams)
+                    presentation = presenter.present(text, out_streams)
         discourse.input_list.update(user_input)
 
         return (user_input, world, discourse, presentation)

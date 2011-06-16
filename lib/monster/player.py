@@ -109,6 +109,7 @@ class Mob(monster.Monster):
     def walk(self, facing):
         compass = { 1: "north", 2: "east", 3: "south", 4: "west" }
         monster.Monster.walk(self, facing)
+        self.level.render_inventory()
         item = self.level.items.get(self.pos, None)
         if item and not hasattr(item, "is_exit"):
             mesg.Mesg(self.display, item.sprite, item.name, delay=6)

@@ -56,6 +56,12 @@ class Game(object):
                         import menus
                         menus.Menu().run()
                         self.display.refresh()
+                    elif key(K_d):
+                        self.level.drop_item()
+                    elif key(K_p):
+                        self.level.put_item()
+                    elif key(K_e):
+                        self.level.examine()
                 except monster.MoveBump, bump:
                     player.attack(d, bump.monster)
                     return
@@ -87,6 +93,9 @@ class Game(object):
         # XXX The player character needs display for messages
         self.level.player.display = self.display
         self.display.refresh()
+        # XXX: Find a better place for this.
+        self.level.render_inventory()
+
         while not self.game_over:
             self.wait_for_command(self.level.player)
             for monster in self.level.monsters.values():
