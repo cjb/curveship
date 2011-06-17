@@ -138,6 +138,8 @@ class CurveshipLevel(Level):
 
         message = [line.replace("\n", "") for line in message]
         message = [line.replace("=", "") for line in message]
+        # Without this, we get an audible "stop".
+        message = [line.replace(".", ". ") for line in message]
 
         self.pipeline = gst.parse_launch('espeak name=src ! autoaudiosink')
         src = self.pipeline.get_by_name('src')
