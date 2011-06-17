@@ -116,6 +116,7 @@ class Mob(monster.Monster):
         if item and item.can_pick:
             self.inventory.append(item.pick())
             mesg.Mesg(self.display, item.sprite, item.name, delay=12)
+            self.level.perform_action("get %s" % item.name)
 	if item and hasattr(item, "is_exit") and item.is_exit:
             print "should open new exit"
             self.level.use_exit(self.pos, compass[facing])
