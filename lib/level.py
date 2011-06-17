@@ -144,6 +144,7 @@ class CurveshipLevel(Level):
         self.pipeline = gst.parse_launch('espeak name=src ! autoaudiosink')
         src = self.pipeline.get_by_name('src')
         src.props.text = message
+        src.props.voice = "english_rp"
         self.pipeline.set_state(gst.STATE_PLAYING)
 
         for line in message:
