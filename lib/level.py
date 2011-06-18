@@ -45,7 +45,7 @@ class CurveshipLevel(Level):
         self.rooms = {}
         self.room_by_pos = {}
         self.initial_text = initial_text
-        self.pipeline = None
+        # self.pipeline = None
 
         self.map = [[":" for i in range(self.w)] for j in range(self.h)]
         self.room_by_pos = [[None for i in range(self.w)] for j in range(self.h)]
@@ -141,11 +141,11 @@ class CurveshipLevel(Level):
         # Without this, we get an audible "stop".
         message = [line.replace(".", ". ") for line in message]
 
-        self.pipeline = gst.parse_launch('espeak name=src ! autoaudiosink')
-        src = self.pipeline.get_by_name('src')
-        src.props.text = message
-        src.props.voice = "english_rp"
-        self.pipeline.set_state(gst.STATE_PLAYING)
+        # self.pipeline = gst.parse_launch('espeak name=src ! autoaudiosink')
+        # src = self.pipeline.get_by_name('src')
+        # src.props.text = message
+        # src.props.voice = "english_rp"
+        # self.pipeline.set_state(gst.STATE_PLAYING)
 
         for line in message:
             if len(message) != 0:
@@ -210,7 +210,7 @@ class CurveshipLevel(Level):
         while True:
             event = pygame.event.poll()
             if event.type == KEYDOWN:
-                self.pipeline.set_state(gst.STATE_PAUSED)
+                # self.pipeline.set_state(gst.STATE_PAUSED)
                 break
         self.display.refresh()
 
@@ -313,7 +313,7 @@ class CurveshipLevel(Level):
         while True:
             event = pygame.event.poll()
             if event.type == KEYDOWN:
-                self.pipeline.set_state(gst.STATE_PAUSED)
+                # self.pipeline.set_state(gst.STATE_PAUSED)
                 break
 
     def place_blocks(self):
